@@ -1,0 +1,173 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "title": "PV Troubleshooting Case Card v0.2",
+  "type": "object",
+  "required": [
+    "case_id",
+    "schema_version",
+    "origin",
+    "process_stage",
+    "symptom",
+    "root_cause",
+    "actions",
+    "outcome",
+    "provenance"
+  ],
+  "properties": {
+    "case_id": { "type": "string" },
+    "schema_version": { "type": "string", "const": "0.2" },
+    "origin": { "enum": ["internal_service", "customer_opt_in"] },
+    "cell_technology": { "enum": ["PERC", "TOPCon", "HJT", "BC", "other"] },
+    "process_stage": {
+      "enum": [
+        "texturing",
+        "boron_diffusion",
+        "phosphorus_diffusion",
+        "oxidation",
+        "LPCVD_poly",
+        "laser_opening",
+        "SE_laser",
+        "etching",
+        "passivation",
+        "SiNx_PECVD",
+        "screen_printing",
+        "sintering",
+        "light_anneal",
+        "testing_sorting",
+        "other"
+      ]
+    },
+    "equipment": {
+      "type": "object",
+      "properties": {
+        "category": { "type": "string" },
+        "model_family": { "type": "string", "description": "Generalized family, not serial/line number" },
+        "software_version": { "type": "string" }
+      }
+    },
+    "alarm": {
+      "type": "object",
+      "description": "Present when the case was triggered by an equipment alarm",
+      "properties": {
+        "code": { "type": "string" },
+        "text": { "type": "string" },
+        "severity": { "enum": ["info", "warning", "high", "critical"] },
+        "playbook_id": { "type": "string" }
+      }
+    },
+    "symptom": {
+      "type": "object",
+      "required": ["category", "description"],
+      "properties": {
+        "category": {
+          "enum": [
+            "yield_drop",
+            "efficiency_drop",
+            "EL_defect",
+            "appearance_defect",
+            "breakage",
+            "equipment_alarm",
+            "other"
+          ]
+        },
+        "description": { "type": "string" },
+        "onset": { "enum": ["sudden", "gradual", "periodic", "intermittent"] },
+        "scope": { "enum": ["single_tool", "single_line", "multi_line", "single_lot", "continuous"] },
+        "metrics_deviation": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name", "direction"],
+            "properties": {
+              "name": { "type": "string", "description": "e.g. Eta, Voc, Isc, FF, Rs, Rsh, Irev, yield" },
+              "direction": { "enum": ["up", "down"] },
+              "magnitude_band": { "type": "string", "description": "Banded, not absolute, e.g. '1-2 pct points'" }
+            }
+          }
+        }
+      }
+    },
+    "context_changes": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type"],
+        "properties": {
+          "type": { "enum": ["material_lot", "paste", "recipe", "maintenance", "environment", "other"] },
+          "note": { "type": "string" }
+        }
+      }
+    },
+    "evidence": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["type", "summary"],
+        "properties": {
+          "type": { "enum": ["image", "trace", "table", "log"] },
+          "summary": { "type": "string" },
+          "shareable": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "root_cause": {
+      "type": "object",
+      "required": ["category", "confidence"],
+      "properties": {
+        "category": { "enum": ["equipment", "material", "process", "environment", "human", "metrology", "unknown"] },
+        "detail": { "type": "string" },
+        "confidence": { "enum": ["confirmed", "probable", "hypothesis"] }
+      }
+    },
+    "actions": {
+      "type": "array",
+      "minItems": 1,
+      "items": {
+        "type": "object",
+        "required": ["step", "action", "check_criteria", "risk_level"],
+        "properties": {
+          "step": { "type": "integer", "minimum": 1 },
+          "action": { "type": "string" },
+          "check_criteria": { "type": "string", "description": "How to judge whether this step worked" },
+          "risk_level": { "enum": ["L0", "L1", "L2", "L3"] },
+          "result": { "enum": ["worked", "partial", "no_effect", "unknown"] }
+        }
+      }
+    },
+    "outcome": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": { "enum": ["resolved", "partially_resolved", "unresolved", "unknown"] },
+        "time_to_resolve_band": { "type": "string" },
+        "recurrence": { "enum": ["none", "recurred", "unknown"] }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "required": ["expert_reviewed", "created_at"],
+      "properties": {
+        "expert_reviewed": { "type": "boolean" },
+        "reviewer_role": { "type": "string" },
+        "created_at": { "type": "string", "format": "date" },
+        "valid_until": { "type": "string", "format": "date", "description": "Knowledge validity period" },
+        "applicability": { "type": "string", "description": "Equipment/material/process scope where this card holds" },
+        "consent": {
+          "type": "object",
+          "properties": {
+            "level": { "enum": ["none", "L1_case_card", "L2_raw_on_escalation"] },
+            "dua_ref": { "type": "string" }
+          }
+        }
+      }
+    },
+    "sanitization": {
+      "type": "object",
+      "properties": {
+        "parameters_normalized": { "type": "boolean" },
+        "free_text_scrubbed": { "type": "boolean" },
+        "rare_combination_generalized": { "type": "boolean" }
+      }
+    }
+  }
+}
