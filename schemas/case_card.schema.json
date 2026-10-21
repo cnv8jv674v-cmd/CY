@@ -1,6 +1,6 @@
 {
   "$schema": "https://json-schema.org/draft/2020-12/schema",
-  "title": "PV Troubleshooting Case Card v0.2",
+  "title": "PV Troubleshooting Case Card v0.3",
   "type": "object",
   "required": [
     "case_id",
@@ -15,8 +15,9 @@
   ],
   "properties": {
     "case_id": { "type": "string" },
-    "schema_version": { "type": "string", "const": "0.2" },
+    "schema_version": { "type": "string", "const": "0.3" },
     "origin": { "enum": ["internal_service", "customer_opt_in"] },
+    "trigger_type": { "enum": ["alarm", "conversation", "signal"] },
     "cell_technology": { "enum": ["PERC", "TOPCon", "HJT", "BC", "other"] },
     "process_stage": {
       "enum": [
@@ -107,6 +108,41 @@
           "type": { "enum": ["image", "trace", "table", "log"] },
           "summary": { "type": "string" },
           "shareable": { "type": "boolean", "default": false }
+        }
+      }
+    },
+    "signal_features": {
+      "type": "object",
+      "description": "Present when the case came from signal-driven diagnostics (e.g. leak check)",
+      "properties": {
+        "recipe_id": { "type": "string" },
+        "step": { "type": "string" },
+        "pattern_label": { "type": "string", "description": "e.g. moisture_outgassing, small_real_leak, major_leak, pumpdown_restriction, gauge_fault, valve_leakby" },
+        "features": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "required": ["name"],
+            "properties": {
+              "name": { "type": "string" },
+              "value_band": { "type": "string", "description": "Banded or relative to baseline, not absolute" },
+              "vs_baseline": { "enum": ["within", "above", "below"] },
+              "trend": { "enum": ["stable", "rising", "falling", "noisy"] }
+            }
+          }
+        }
+      }
+    },
+    "parts_replaced": {
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["part_no"],
+        "properties": {
+          "part_no": { "type": "string" },
+          "name": { "type": "string" },
+          "identified_by": { "enum": ["photo_agent", "engineer", "other"] },
+          "confirmed": { "type": "boolean" }
         }
       }
     },
